@@ -1,598 +1,479 @@
+import 'dart:async';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
-
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../models/player.dart';
-
-enum Difficulty { easy, medium, hard }
+import '../../theme/app_theme.dart';
 
 class GameScreen extends StatefulWidget {
   final Player player1;
   final Player player2;
-  final bool isPlayerVsPlayer;
+  final bool isPlayerVsCpu;
 
   const GameScreen({
     super.key,
     required this.player1,
     required this.player2,
-    required this.isPlayerVsPlayer,
+    required this.isPlayerVsCpu,
   });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
-  late List<List<String>> _board;
+class _GameScreenState extends State<GameScreen> {
+  late List<String> _board;
   late bool _isPlayer1Turn;
   late bool _gameOver;
-  late String _winner;
-  late List<List<AnimationController>> _cellAnimationControllers;
-  late AnimationController _boardAnimationController;
-  final Random _random = Random();
-  Difficulty? selectedDifficulty;
-  bool isDifficultySelected = false;
-
-  final Color _backgroundColor = const Color(0xFF34495E);
-  final Color _player1Color = Colors.blue;
-  final Color _player2Color = Colors.red;
-  final Color _cardColor = Colors.white;
-  final Color _textColor = Colors.white;
-
-  final Map<Difficulty, DifficultySettings> _difficultySettings = {
-    Difficulty.easy: DifficultySettings(
-      optimalPlayChance: 20,
-      centerPreference: 30,
-      cornerPreference: 20,
-      blockingMoveChance: 25,
-      minMoveDelay: 300,
-      maxMoveDelay: 800,
-    ),
-    Difficulty.medium: DifficultySettings(
-      optimalPlayChance: 65,
-      centerPreference: 75,
-      cornerPreference: 65,
-      blockingMoveChance: 75,
-      minMoveDelay: 200,
-      maxMoveDelay: 500,
-    ),
-    Difficulty.hard: DifficultySettings(
-      optimalPlayChance: 95,
-      centerPreference: 95,
-      cornerPreference: 90,
-      blockingMoveChance: 98,
-      minMoveDelay: 100,
-      maxMoveDelay: 300,
-    ),
-  };
+  String? _winner;
+  List<int>? _winningLine;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isPlayerVsPlayer) {
-      isDifficultySelected = true;
-      _initializeGame();
-    }
+    _initializeGame();
   }
 
-  Widget _buildDifficultySelection() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Select Difficulty',
-            style: TextStyle(
-              color: _textColor,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+  void _initializeGame() {
+    _board = List.filled(9, '');
+    _isPlayer1Turn = true;
+    _gameOver = false;
+    _winner = null;
+    _winningLine = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.primaryColor,
+              AppTheme.backgroundColor,
+            ],
+            stops: [0.2, 0.9],
           ),
-          const SizedBox(height: 20),
-          ...Difficulty.values.map((difficulty) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _cardColor,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      selectedDifficulty = difficulty;
-                      isDifficultySelected = true;
-                      _initializeGame();
-                    });
-                  },
-                  child: Text(
-                    difficulty.name.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader().animate().fadeIn(duration: 600.ms),
+              const Spacer(),
+              _buildGameBoard(),
+              const Spacer(),
+              _buildGameStatus().animate().fadeIn(duration: 600.ms),
+              const SizedBox(height: 20),
+              _buildControls().animate().fadeIn(duration: 600.ms),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          Column(
+            children: [
+              const Text(
+                'SCORE',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
-              )),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    widget.player1.score.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '-',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 24,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    widget.player2.score.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(width: 40),
         ],
       ),
     );
   }
 
-  void _initializeGame() {
-    _board = List.generate(3, (_) => List.filled(3, ''));
-    _isPlayer1Turn = true;
-    _gameOver = false;
-    _winner = '';
-
-    _cellAnimationControllers = List.generate(
-      3,
-      (i) => List.generate(
-        3,
-        (j) => AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 300),
+  Widget _buildGameBoard() {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(8),
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1,
+            ),
+            itemCount: 9,
+            itemBuilder: (context, index) => _buildCell(index),
+          ),
         ),
       ),
+    ).animate().scale(
+      duration: 600.ms,
+      curve: Curves.easeOutBack,
+      begin: const Offset(0.8, 0.8),
     );
+  }
 
-    _boardAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
+  Widget _buildCell(int index) {
+    final isWinningCell = _winningLine?.contains(index) ?? false;
+    final cellContent = _board[index];
+
+    return GestureDetector(
+      onTap: () => _onCellTapped(index),
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: Colors.blue[900]?.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: cellContent.isEmpty
+            ? _buildEmptyCell()
+            : _buildSymbol(cellContent, isWinningCell),
+      ),
     );
-
-    _boardAnimationController.forward();
   }
 
-  void _resetGame() {
-    setState(() {
-      _initializeGame();
-    });
+  Widget _buildEmptyCell() {
+    return const SizedBox.expand();
   }
 
-  void _handleCellTap(int row, int col) {
-    if (_board[row][col].isNotEmpty || _gameOver) return;
-
-    setState(() {
-      _board[row][col] = _isPlayer1Turn ? 'X' : 'O';
-      _cellAnimationControllers[row][col].forward(from: 0.0);
-
-      if (_checkWinner(row, col)) {
-        _gameOver = true;
-        if (!widget.isPlayerVsPlayer && !_isPlayer1Turn) {
-          _winner = 'CPU';
-          widget.player2.score++;
-        } else if (_isPlayer1Turn) {
-          _winner = widget.isPlayerVsPlayer ? widget.player1.name : 'Player';
-          widget.player1.score++;
-        } else {
-          _winner = widget.player2.name;
-          widget.player2.score++;
-        }
-      } else if (_isBoardFull()) {
-        _gameOver = true;
-        _winner = 'Draw';
-      } else {
-        _isPlayer1Turn = !_isPlayer1Turn;
-
-        if (!widget.isPlayerVsPlayer && !_isPlayer1Turn) {
-          _makeCPUMove();
-        }
-      }
-    });
+  Widget _buildSymbol(String symbol, bool isWinningCell) {
+    if (symbol == 'X') {
+      return _buildX(isWinningCell);
+    } else {
+      return _buildO(isWinningCell);
+    }
   }
 
-  void _makeCPUMove() async {
-    await Future.delayed(Duration(
-      milliseconds: _random.nextInt(
-            (_difficultySettings[selectedDifficulty]?.maxMoveDelay ?? 400) -
-                (_difficultySettings[selectedDifficulty]?.minMoveDelay ?? 200),
-          ) +
-          (_difficultySettings[selectedDifficulty]?.minMoveDelay ?? 200),
-    ));
-
-    if (_gameOver) return;
-
-    List<List<int>> emptyCells = [];
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        if (_board[i][j].isEmpty) {
-          emptyCells.add([i, j]);
-        }
-      }
-    }
-
-    if (emptyCells.isEmpty) return;
-
-    // Try to find a winning move
-    for (var cell in emptyCells) {
-      int row = cell[0], col = cell[1];
-      _board[row][col] = 'O';
-      if (_checkWinner(row, col)) {
-        setState(() {
-          _handleCellTap(row, col);
-        });
-        return;
-      }
-      _board[row][col] = '';
-    }
-
-    // Try to block player's winning move
-    for (var cell in emptyCells) {
-      int row = cell[0], col = cell[1];
-      _board[row][col] = 'X';
-      if (_checkWinner(row, col)) {
-        _board[row][col] = '';
-        if (_random.nextInt(100) <
-            (_difficultySettings[selectedDifficulty]?.blockingMoveChance ??
-                70)) {
-          setState(() {
-            _handleCellTap(row, col);
-          });
-          return;
-        }
-      }
-      _board[row][col] = '';
-    }
-
-    // Try to take center
-    if (_board[1][1].isEmpty &&
-        _random.nextInt(100) <
-            (_difficultySettings[selectedDifficulty]?.centerPreference ?? 70)) {
-      setState(() {
-        _handleCellTap(1, 1);
-      });
-      return;
-    }
-
-    // Try to take corners
-    List<List<int>> corners = [
-      [0, 0],
-      [0, 2],
-      [2, 0],
-      [2, 2]
-    ];
-    corners.shuffle(_random);
-    for (var corner in corners) {
-      if (_board[corner[0]][corner[1]].isEmpty &&
-          _random.nextInt(100) <
-              (_difficultySettings[selectedDifficulty]?.cornerPreference ??
-                  60)) {
-        setState(() {
-          _handleCellTap(corner[0], corner[1]);
-        });
-        return;
-      }
-    }
-
-    // Make a random move
-    var randomCell = emptyCells[_random.nextInt(emptyCells.length)];
-    setState(() {
-      _handleCellTap(randomCell[0], randomCell[1]);
-    });
+  Widget _buildX(bool isWinningCell) {
+    return CustomPaint(
+      painter: XPainter(
+        color: isWinningCell ? AppTheme.accentColor : Colors.white,
+      ),
+    ).animate()
+        .scale(
+      duration: 200.ms,
+      curve: Curves.easeOutBack,
+    )
+        .fadeIn(duration: 200.ms);
   }
 
-  bool _checkWinner(int row, int col) {
-    String symbol = _board[row][col];
-    if (_board[row].every((cell) => cell == symbol)) return true;
-    if (_board.every((row) => row[col] == symbol)) return true;
-    if (row == col &&
-        _board
-            .asMap()
-            .entries
-            .every((entry) => _board[entry.key][entry.key] == symbol)) {
-      return true;
-    }
-    if (row + col == 2 &&
-        _board
-            .asMap()
-            .entries
-            .every((entry) => _board[entry.key][2 - entry.key] == symbol)) {
-      return true;
-    }
-    return false;
-  }
-
-  bool _isBoardFull() {
-    return _board.every((row) => row.every((cell) => cell.isNotEmpty));
+  Widget _buildO(bool isWinningCell) {
+    return CustomPaint(
+      painter: OPainter(
+        color: isWinningCell ? AppTheme.accentColor : Colors.white,
+      ),
+    ).animate()
+        .scale(
+      duration: 200.ms,
+      curve: Curves.easeOutBack,
+    )
+        .fadeIn(duration: 200.ms);
   }
 
   Widget _buildGameStatus() {
-    if (!_gameOver) {
-      return Text(
-        _isPlayer1Turn ? "Your Turn" : "CPU's Turn",
+    final currentPlayer = _isPlayer1Turn ? widget.player1 : widget.player2;
+    String statusText;
+    Color statusColor;
+
+    if (_gameOver) {
+      if (_winner != null) {
+        final winner = _winner == widget.player1.symbol
+            ? widget.player1
+            : widget.player2;
+        statusText = '${winner.name} Wins!';
+        statusColor = AppTheme.accentColor;
+      } else {
+        statusText = "It's a Draw!";
+        statusColor = Colors.white70;
+      }
+    } else {
+      statusText = "${currentPlayer.name}'s Turn";
+      statusColor = Colors.white;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 32,
+        vertical: 16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        statusText,
         style: TextStyle(
-          color: _textColor,
+          color: statusColor,
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    String message;
-    Color messageColor;
-
-    if (_winner == 'Draw') {
-      message = "It's a Draw!";
-      messageColor = _textColor;
-    } else if (_winner == 'CPU') {
-      message = "CPU Wins!";
-      messageColor = _player2Color;
-    } else {
-      message = "You Win!";
-      messageColor = _player1Color;
-    }
-
-    return Column(
-      children: [
-        Text(
-          message,
-          style: TextStyle(
-            color: messageColor,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+  Widget _buildControls() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildButton(
+            onPressed: _resetGame,
+            icon: Icons.refresh,
+            label: 'New Game',
           ),
+          _buildButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icons.exit_to_app,
+            label: 'Exit Game',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(0.2),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 12,
         ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: _resetGame,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _cardColor,
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
-          child: const Text(
-            'Play Again',
-            style: TextStyle(
-              fontSize: 18,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBackButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-        color: Colors.white,
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                backgroundColor: _backgroundColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                title: Text(
-                  'Leave Game?',
-                  style: TextStyle(color: _textColor),
-                ),
-                content: Text(
-                  'Are you sure you want to return to the menu? Current game progress will be lost.',
-                  style: TextStyle(color: _textColor),
-                ),
-                actions: [
-                  TextButton(
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  TextButton(
-                    child: Text(
-                      'Leave',
-                      style: TextStyle(color: _player2Color),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        },
+        ],
       ),
     );
   }
 
-  Widget _buildGameBoard() {
-    return Stack(
-      children: [
-        Positioned(
-          top: 20,
-          left: 20,
-          child: _buildBackButton(),
-        ),
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.isPlayerVsPlayer
-                          ? '${widget.player1.name}: ${widget.player1.score}'
-                          : 'Player: ${widget.player1.score}',
-                      style: TextStyle(
-                        color: _textColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      widget.isPlayerVsPlayer
-                          ? '${widget.player2.name}: ${widget.player2.score}'
-                          : 'CPU: ${widget.player2.score}',
-                      style: TextStyle(
-                        color: _textColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildGameStatus(),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 5,
-                    mainAxisSpacing: 5,
-                  ),
-                  itemCount: 9,
-                  itemBuilder: (context, index) {
-                    final row = index ~/ 3;
-                    final col = index % 3;
-                    return GestureDetector(
-                      onTap: () => _handleCellTap(row, col),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: _backgroundColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _board[row][col],
-                            style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: _board[row][col] == 'X'
-                                  ? _player1Color
-                                  : _player2Color,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  void _onCellTapped(int index) {
+    if (_board[index].isEmpty && !_gameOver) {
+      setState(() {
+        _board[index] = _isPlayer1Turn
+            ? widget.player1.symbol
+            : widget.player2.symbol;
+
+        _checkGameEnd();
+
+        if (!_gameOver) {
+          _isPlayer1Turn = !_isPlayer1Turn;
+
+          if (widget.isPlayerVsCpu && !_isPlayer1Turn) {
+            _makeCpuMove();
+          }
+        }
+      });
+    }
   }
 
-  @override
-  void dispose() {
-    for (var row in _cellAnimationControllers) {
-      for (var controller in row) {
-        controller.dispose();
+  void _makeCpuMove() {
+    Timer(const Duration(milliseconds: 500), () {
+      if (!_gameOver) {
+        final emptyIndices = List.generate(9, (i) => i)
+            .where((i) => _board[i].isEmpty)
+            .toList();
+
+        if (emptyIndices.isNotEmpty) {
+          final random = Random();
+          final index = emptyIndices[random.nextInt(emptyIndices.length)];
+          _onCellTapped(index);
+        }
+      }
+    });
+  }
+
+  void _checkGameEnd() {
+    // Check rows
+    for (int i = 0; i < 9; i += 3) {
+      if (_board[i].isNotEmpty &&
+          _board[i] == _board[i + 1] &&
+          _board[i] == _board[i + 2]) {
+        _winningLine = [i, i + 1, i + 2];
+        _endGame(_board[i]);
+        return;
       }
     }
-    _boardAnimationController.dispose();
-    super.dispose();
+
+    // Check columns
+    for (int i = 0; i < 3; i++) {
+      if (_board[i].isNotEmpty &&
+          _board[i] == _board[i + 3] &&
+          _board[i] == _board[i + 6]) {
+        _winningLine = [i, i + 3, i + 6];
+        _endGame(_board[i]);
+        return;
+      }
+    }
+
+    // Check diagonals
+    if (_board[0].isNotEmpty &&
+        _board[0] == _board[4] &&
+        _board[0] == _board[8]) {
+      _winningLine = [0, 4, 8];
+      _endGame(_board[0]);
+      return;
+    }
+    if (_board[2].isNotEmpty &&
+        _board[2] == _board[4] &&
+        _board[2] == _board[6]) {
+      _winningLine = [2, 4, 6];
+      _endGame(_board[2]);
+      return;
+    }
+
+    // Check for draw
+    if (!_board.contains('')) {
+      _endGame(null);
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        bool shouldPop = false;
-        await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: _backgroundColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              title: Text(
-                'Leave Game?',
-                style: TextStyle(color: _textColor),
-              ),
-              content: Text(
-                'Are you sure you want to return to the menu? Current game progress will be lost.',
-                style: TextStyle(color: _textColor),
-              ),
-              actions: [
-                TextButton(
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  child: Text(
-                    'Leave',
-                    style: TextStyle(color: _player2Color),
-                  ),
-                  onPressed: () {
-                    shouldPop = true;
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
-          },
-        );
-        return shouldPop;
-      },
-      child: Scaffold(
-        backgroundColor: _backgroundColor,
-        body: SafeArea(
-          child: !widget.isPlayerVsPlayer && !isDifficultySelected
-              ? _buildDifficultySelection()
-              : _buildGameBoard(),
-        ),
-      ),
-    );
+  void _endGame(String? winner) {
+    _gameOver = true;
+    _winner = winner;
+
+    if (winner != null) {
+      if (winner == widget.player1.symbol) {
+        widget.player1.score++;
+      } else {
+        widget.player2.score++;
+      }
+    }
+  }
+
+  void _resetGame() {
+    setState(_initializeGame);
   }
 }
 
-class DifficultySettings {
-  final int optimalPlayChance;
-  final int centerPreference;
-  final int cornerPreference;
-  final int blockingMoveChance;
-  final int minMoveDelay;
-  final int maxMoveDelay;
+class XPainter extends CustomPainter {
+  final Color color;
 
-  DifficultySettings({
-    required this.optimalPlayChance,
-    required this.centerPreference,
-    required this.cornerPreference,
-    required this.blockingMoveChance,
-    required this.minMoveDelay,
-    required this.maxMoveDelay,
-  });
+  XPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final padding = size.width * 0.2;
+
+    // First line of X
+    canvas.drawLine(
+      Offset(padding, padding),
+      Offset(size.width - padding, size.height - padding),
+      paint,
+    );
+
+    // Second line of X
+    canvas.drawLine(
+      Offset(size.width - padding, padding),
+      Offset(padding, size.height - padding),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(XPainter oldDelegate) => color != oldDelegate.color;
+}
+
+class OPainter extends CustomPainter {
+  final Color color;
+
+  OPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 8
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) * 0.6;
+
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(OPainter oldDelegate) => color != oldDelegate.color;
 }

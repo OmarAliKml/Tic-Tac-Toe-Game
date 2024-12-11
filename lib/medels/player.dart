@@ -1,6 +1,6 @@
 class Player {
-  String name;
-  String symbol;
+  final String name;
+  final String symbol;
   int score;
 
   Player({
@@ -8,4 +8,9 @@ class Player {
     required this.symbol,
     this.score = 0,
   });
+}
+
+enum GameMode {
+  playerVsPlayer,
+  playerVsCpu,
 }

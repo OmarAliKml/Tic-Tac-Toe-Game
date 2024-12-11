@@ -1,341 +1,251 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../models/player.dart';
+import '../../theme/app_theme.dart';
 import 'game_screen.dart';
 
 class GameSetupScreen extends StatefulWidget {
-  final bool initialIsPlayerVsPlayer;
+  final bool isPlayerVsPlayer;
 
   const GameSetupScreen({
     super.key,
-    required this.initialIsPlayerVsPlayer,
+    required this.isPlayerVsPlayer,
   });
 
   @override
   State<GameSetupScreen> createState() => _GameSetupScreenState();
 }
 
-class _GameSetupScreenState extends State<GameSetupScreen>
-    with SingleTickerProviderStateMixin {
-  late TextEditingController _player1Controller;
-  late TextEditingController _player2Controller;
-  late AnimationController _animationController;
-  late Animation<double> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-
-  final Color _primaryColor = const Color(0xFF2C3E50);
-  final Color _accentColor = const Color(0xFF3498DB);
-  final Color _backgroundColor = const Color(0xFF34495E);
-  final Color _cardColor = const Color(0xFF2C3E50);
-  final Color _textColor = Colors.white;
-  final Color _secondaryTextColor = const Color(0xFFBDC3C7);
-
-  @override
-  void initState() {
-    super.initState();
-    _player1Controller = TextEditingController(text: 'Player 1');
-    _player2Controller = TextEditingController(
-      text: widget.initialIsPlayerVsPlayer ? 'Player 2' : 'CPU',
-    );
-
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _slideAnimation = Tween<double>(
-      begin: 100.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.8, curve: Curves.easeOutCubic),
-    ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.4, 1.0, curve: Curves.easeIn),
-    ));
-
-    _animationController.forward();
-  }
+class _GameSetupScreenState extends State<GameSetupScreen> {
+  final _player1Controller = TextEditingController(text: 'Player 1');
+  final _player2Controller = TextEditingController(text: 'Player 2');
+  String _player1Symbol = 'X';
+  String _player2Symbol = 'O';
 
   @override
   void dispose() {
     _player1Controller.dispose();
     _player2Controller.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
-  void _startGame() {
-    final player1 = Player(
-      name: _player1Controller.text.trim().isNotEmpty
-          ? _player1Controller.text.trim()
-          : 'Player 1',
-      symbol: 'X',
-    );
-    final player2 = Player(
-      name: _player2Controller.text.trim().isNotEmpty
-          ? _player2Controller.text.trim()
-          : widget.initialIsPlayerVsPlayer
-              ? 'Player 2'
-              : 'CPU',
-      symbol: 'O',
-    );
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => GameScreen(
-          player1: player1,
-          player2: player2,
-          isPlayerVsPlayer: widget.initialIsPlayerVsPlayer,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.primaryColor,
+              AppTheme.backgroundColor,
+            ],
+          ),
         ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOut;
-
-          var tween = Tween(begin: begin, end: end);
-          var curvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: curve,
-          );
-
-          return SlideTransition(
-            position: tween.animate(curvedAnimation),
-            child: FadeTransition(
-              opacity: animation,
-              child: child,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 40),
+                _buildPlayerSetup(
+                  controller: _player1Controller,
+                  label: 'Player 1 Name',
+                  symbol: _player1Symbol,
+                  onSymbolChanged: (value) {
+                    setState(() {
+                      _player1Symbol = value;
+                      _player2Symbol = value == 'X' ? 'O' : 'X';
+                    });
+                  },
+                ).animate().fadeIn(delay: 300.ms).slideX(),
+                const SizedBox(height: 24),
+                if (widget.isPlayerVsPlayer)
+                  _buildPlayerSetup(
+                    controller: _player2Controller,
+                    label: 'Player 2 Name',
+                    symbol: _player2Symbol,
+                    enabled: false,
+                  ).animate().fadeIn(delay: 500.ms).slideX(),
+                const SizedBox(height: 48),
+                _buildStartButton(),
+              ],
             ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 800),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          widget.isPlayerVsPlayer ? 'Player vs Player' : 'Player vs CPU',
+          style: const TextStyle(
+            fontSize: 28,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Set up your game',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.white.withOpacity(0.8),
+          ),
+        ),
+      ],
+    ).animate().fadeIn().slideY(begin: -0.2);
+  }
+
+  Widget _buildPlayerSetup({
+    required TextEditingController controller,
+    required String label,
+    required String symbol,
+    bool enabled = true,
+    void Function(String)? onSymbolChanged,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _cardColor.withOpacity(0.5),
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _accentColor.withOpacity(0.3),
-          width: 2,
-        ),
       ),
-      child: Text(
-        widget.initialIsPlayerVsPlayer
-            ? 'Player vs Player Setup'
-            : 'Player vs CPU Setup',
-        style: TextStyle(
-          color: _textColor,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-        textAlign: TextAlign.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.1),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Text(
+                'Symbol:',
+                style: TextStyle(color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              if (enabled)
+                _buildSymbolToggle(
+                  symbol,
+                  onSymbolChanged ?? (_) {},
+                )
+              else
+                Text(
+                  symbol,
+                  style: const TextStyle(
+                    color: AppTheme.accentColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPlayerInput(
-    String label,
-    TextEditingController controller,
-    IconData icon,
-    bool enabled,
-  ) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 500),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
+  Widget _buildSymbolToggle(String currentSymbol, Function(String) onChanged) {
+    return Row(
+      children: ['X', 'O'].map((symbol) {
+        final isSelected = currentSymbol == symbol;
+        return GestureDetector(
+          onTap: () => onChanged(symbol),
           child: Container(
-            decoration: BoxDecoration(
-              color: _cardColor.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _accentColor.withOpacity(0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+            margin: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
             ),
-            child: TextField(
-              controller: controller,
-              enabled: enabled,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.accentColor
+                  : Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              symbol,
               style: TextStyle(
-                color: _textColor,
-                fontSize: 16,
-              ),
-              decoration: InputDecoration(
-                labelText: label,
-                labelStyle: TextStyle(color: _secondaryTextColor),
-                prefixIcon: Icon(icon, color: _accentColor),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: _accentColor, width: 2),
-                ),
-                filled: true,
-                fillColor: Colors.transparent,
+                color: isSelected ? AppTheme.primaryColor : Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
         );
-      },
+      }).toList(),
     );
   }
 
   Widget _buildStartButton() {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 500),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: Container(
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  _accentColor,
-                  _accentColor.withOpacity(0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: _accentColor.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: _startGame,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.play_arrow_rounded,
-                    size: 28,
-                    color: _textColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Start Game',
-                    style: TextStyle(
-                      color: _textColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _startGame,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.accentColor,
+          foregroundColor: AppTheme.primaryColor,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        child: const Text('START GAME'),
+      ),
+    ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _backgroundColor,
-            _backgroundColor.withOpacity(0.8),
-          ],
-        ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: Text(
-            'Game Setup',
-            style: TextStyle(
-              color: _textColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: _textColor),
-        ),
-        body: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _slideAnimation.value),
-              child: Opacity(
-                opacity: _fadeAnimation.value,
-                child: child,
-              ),
-            );
-          },
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 32),
-                  _buildPlayerInput(
-                    'Player 1 Name',
-                    _player1Controller,
-                    Icons.person,
-                    true,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildPlayerInput(
-                    widget.initialIsPlayerVsPlayer
-                        ? 'Player 2 Name'
-                        : 'CPU Name',
-                    _player2Controller,
-                    widget.initialIsPlayerVsPlayer
-                        ? Icons.person
-                        : Icons.smart_toy_rounded,
-                    widget.initialIsPlayerVsPlayer,
-                  ),
-                  const Spacer(),
-                  _buildStartButton(),
-                ],
-              ),
-            ),
-          ),
+  void _startGame() {
+    final player1 = Player(
+      name: _player1Controller.text.trim(),
+      symbol: _player1Symbol,
+    );
+
+    final player2 = Player(
+      name: widget.isPlayerVsPlayer
+          ? _player2Controller.text.trim()
+          : 'CPU',
+      symbol: _player2Symbol,
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GameScreen(
+          player1: player1,
+          player2: player2,
+          isPlayerVsCpu: !widget.isPlayerVsPlayer,
         ),
       ),
     );
