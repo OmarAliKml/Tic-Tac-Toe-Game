@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../medels/game_player.dart';
+import '../../models/game_player.dart';
 import '../../theme/app_theme.dart';
 import 'game_screen.dart';
 
@@ -11,7 +11,6 @@ class GameSetupScreen extends StatefulWidget {
     super.key,
     required this.isPlayerVsPlayer,
   });
-
   @override
   State<GameSetupScreen> createState() => _GameSetupScreenState();
 }

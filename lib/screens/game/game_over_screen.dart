@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../medels/player.dart';
+import '../../models/game_player.dart';
+
 
 class GameOverScreen extends StatelessWidget {
   final String winner;
@@ -8,11 +9,11 @@ class GameOverScreen extends StatelessWidget {
   final Player player2;
 
   const GameOverScreen({
-    Key? key,
+    super.key,
     required this.winner,
     required this.player1,
     required this.player2,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

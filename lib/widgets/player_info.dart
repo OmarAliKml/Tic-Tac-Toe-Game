@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../medels/game_player.dart';
+import '../models/game_player.dart';
+
 
 class PlayerInfo extends StatelessWidget {
   final Player player1;
@@ -8,11 +9,11 @@ class PlayerInfo extends StatelessWidget {
   final bool isPlayer1Turn;
 
   const PlayerInfo({
-    Key? key,
+    super.key,
     required this.player1,
     required this.player2,
     required this.isPlayer1Turn,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,5 @@
-import 'package:tic_tac_toe/medels/player.dart';
+
+import 'game_player.dart';
 
 class GameState {
   List<String> board;

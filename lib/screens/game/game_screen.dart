@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../medels/game_player.dart';
+import '../../models/game_player.dart';
 import '../../theme/app_theme.dart';
 
 class GameScreen extends StatefulWidget {
