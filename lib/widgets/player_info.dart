@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/player.dart';
+import '../medels/game_player.dart';
 
 class PlayerInfo extends StatelessWidget {
   final Player player1;

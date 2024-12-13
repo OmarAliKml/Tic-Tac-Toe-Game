@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../models/player.dart';
+import '../../medels/game_player.dart';
 import '../../theme/app_theme.dart';
 import 'game_screen.dart';
 
