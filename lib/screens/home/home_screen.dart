@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _titleController.forward();
     Future.delayed(
       const Duration(milliseconds: 500),
-      () => _buttonsController.forward(),
+          () => _buttonsController.forward(),
     );
   }
 
@@ -114,9 +114,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
       },
       child: ShaderMask(
-        shaderCallback: (bounds) => const LinearGradient(
-          colors: [Colors.blue, Colors.purple],
-        ).createShader(bounds),
+        shaderCallback: (bounds) =>
+            const LinearGradient(
+              colors: [Colors.blue, Colors.purple],
+            ).createShader(bounds),
         child: const Text(
           'TIC TAC TOE',
           style: TextStyle(
@@ -195,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 buildGameButton(
                   'Start',
                   Icons.play_arrow,
-                  () => navigateToGame(true),
+                      () => navigateToGame(true),
                 ),
                 const SizedBox(height: 20),
                 buildGameButton(
@@ -351,90 +352,91 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void showTutorial() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        backgroundColor: Colors.grey[900],
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) =>
+          Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.grey[900],
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'How to Play',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'How to Play',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
+                  const SizedBox(height: 24),
+                  buildTutorialStep(
+                    number: "01",
+                    title: "Take Turns",
+                    description:
+                    "Players alternate placing X and O marks on the board",
+                    icon: Icons.swap_horiz,
+                  ),
+                  const SizedBox(height: 16),
+                  buildTutorialStep(
+                    number: "02",
+                    title: "Win Condition",
+                    description: "Get three of your marks in a row to win",
+                    icon: Icons.emoji_events,
+                  ),
+                  const SizedBox(height: 16),
+                  buildTutorialStep(
+                    number: "03",
+                    title: "Match Patterns",
+                    description:
+                    "Winning lines can be horizontal, vertical, or diagonal",
+                    icon: Icons.route,
+                  ),
+                  const SizedBox(height: 16),
+                  buildTutorialStep(
+                    number: "04",
+                    title: "Draw Game",
+                    description: "If the board fills up with no winner, it's a tie",
+                    icon: Icons.balance,
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white54,
+                    style: TextButton.styleFrom(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      backgroundColor: Colors.blue.shade700,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Got it!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              buildTutorialStep(
-                number: "01",
-                title: "Take Turns",
-                description:
-                    "Players alternate placing X and O marks on the board",
-                icon: Icons.swap_horiz,
-              ),
-              const SizedBox(height: 16),
-              buildTutorialStep(
-                number: "02",
-                title: "Win Condition",
-                description: "Get three of your marks in a row to win",
-                icon: Icons.emoji_events,
-              ),
-              const SizedBox(height: 16),
-              buildTutorialStep(
-                number: "03",
-                title: "Match Patterns",
-                description:
-                    "Winning lines can be horizontal, vertical, or diagonal",
-                icon: Icons.route,
-              ),
-              const SizedBox(height: 16),
-              buildTutorialStep(
-                number: "04",
-                title: "Draw Game",
-                description: "If the board fills up with no winner, it's a tie",
-                icon: Icons.balance,
-              ),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  backgroundColor: Colors.blue.shade700,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Got it!',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 }

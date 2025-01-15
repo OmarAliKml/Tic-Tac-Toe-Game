@@ -14,7 +14,7 @@ class _TicTacToePageState extends State<TicTacToePage>
     with TickerProviderStateMixin {
   List<List<String>> board = List.generate(3, (_) => List.filled(3, ''));
   List<List<bool>> winningCells =
-      List.generate(3, (_) => List.filled(3, false));
+  List.generate(3, (_) => List.filled(3, false));
   bool isPlayerTurn = true;
   int playerScore = 0;
   int computerScore = 0;
@@ -43,23 +43,28 @@ class _TicTacToePageState extends State<TicTacToePage>
 
     cellControllers = List.generate(
       3,
-      (_) => List.generate(
-        3,
-        (_) => AnimationController(
-          duration: const Duration(milliseconds: 200),
-          vsync: this,
-        ),
-      ),
+          (_) =>
+          List.generate(
+            3,
+                (_) =>
+                AnimationController(
+                  duration: const Duration(milliseconds: 200),
+                  vsync: this,
+                ),
+          ),
     );
 
     cellAnimations = List.generate(
       3,
-      (_) => List.generate(
-        3,
-        (_) => Tween<double>(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(parent: cellControllers[_][_], curve: Curves.easeOut),
-        ),
-      ),
+          (_) =>
+          List.generate(
+            3,
+                (_) =>
+                Tween<double>(begin: 0.0, end: 1.0).animate(
+                  CurvedAnimation(
+                      parent: cellControllers[_][_], curve: Curves.easeOut),
+                ),
+          ),
     );
   }
 
@@ -182,8 +187,8 @@ class _TicTacToePageState extends State<TicTacToePage>
     );
   }
 
-  Widget buildScoreColumn(
-      String label, int score, Color color, bool isCurrentTurn) {
+  Widget buildScoreColumn(String label, int score, Color color,
+      bool isCurrentTurn) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -263,8 +268,8 @@ class _TicTacToePageState extends State<TicTacToePage>
               decoration: BoxDecoration(
                 color: winningCells[row][col]
                     ? (board[row][col] == 'X'
-                        ? Colors.blue.withOpacity(0.3)
-                        : Colors.purple.withOpacity(0.3))
+                    ? Colors.blue.withOpacity(0.3)
+                    : Colors.purple.withOpacity(0.3))
                     : Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
@@ -304,7 +309,7 @@ class _TicTacToePageState extends State<TicTacToePage>
           buildControlButton(
             isSinglePlayer ? '2 Players' : '1 Player',
             isSinglePlayer ? Icons.people : Icons.person,
-            () {
+                () {
               setState(() {
                 isSinglePlayer = !isSinglePlayer;
                 resetGame();
