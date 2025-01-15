@@ -20,6 +20,6 @@ A sleek Tic Tac Toe game built with Flutter, featuring smooth animations, AI opp
 - [Dart SDK](https://dart.dev/get-dart)
 - [Android Studio](https://developer.android.com/studio) / [VS Code](https://code.visualstudio.com/)
 
-[Demo!]()
+[Demo!](https://appetize.io/app/b_qm2jabaflpl56x67h7byjgdcme)
 
 [Omar Ali](https://omaralikml.github.io/)
