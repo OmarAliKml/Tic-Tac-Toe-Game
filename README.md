@@ -1,6 +1,6 @@
 # Tic Tac Toe 🎮
 
-A sleek and Tic Tac Toe game built with Flutter, featuring smooth animations, AI opponent, and local multiplayer.
+A sleek Tic Tac Toe game built with Flutter, featuring smooth animations, AI opponent, and local multiplayer.
 
 ## ✨ Features
 
@@ -16,38 +16,10 @@ A sleek and Tic Tac Toe game built with Flutter, featuring smooth animations, AI
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter (latest version)
-- Dart SDK
-- Android Studio / VS Code
+- [Flutter](https://flutter.dev/docs/get-started/install) (latest version)
+- [Dart SDK](https://dart.dev/get-dart)
+- [Android Studio](https://developer.android.com/studio) / [VS Code](https://code.visualstudio.com/)
 
-### Installation
-```bash
-# Clone repository
-git clone https://github.com/yourusername/modern_tictactoe.git
+[Demo!]()
 
-# Navigate to project
-cd modern_tictactoe
-
-# Install dependencies
-flutter pub get
-
-# Run app
-flutter run
-📁 Project Structure
-
-🎮 How to Play
-Choose game mode (1P or 2P)
-Player X starts first
-Tap empty cells to place marks
-Get three in a row to win
-Use 'New Game' to restart
-
-Fork and Star the Project
-
-Email: omar.ali.kml@gmail.com
-🌟 Acknowledgments
-Flutter Documentation
-Dart Documentation
-Modern UI/UX Principles
-
-Built with "Flutter"
+[Omar Ali](https://omaralikml.github.io/)
